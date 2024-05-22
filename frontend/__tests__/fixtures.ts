@@ -28,7 +28,7 @@ export const SAVE = 'Save';
 
 export const SHOW_MORE = 'show more >';
 
-export const RETRY = 'retry';
+export const RETRY = 'Retry';
 
 export const BACK = 'Back';
 
@@ -53,6 +53,16 @@ export const TOKEN_ERROR_MESSAGE = ['Token is invalid!', 'Token is required!'];
 export const PROJECT_NAME_LABEL = 'Project name';
 
 export const STEPPER = ['Config', 'Metrics', 'Report'];
+
+export const DISPLAY_TYPE = {
+  LIST: 'List',
+  CHART: 'Chart',
+};
+
+export const CHART_TYPE = {
+  BOARD: 'Board',
+  DORA: 'DORA',
+};
 
 export const REQUIRED_DATA_LIST = [
   'All',
