@@ -129,8 +129,8 @@ const DateRangeViewer = ({
 
   const DateRangeExpand = forwardRef((props, ref: React.ForwardedRef<HTMLDivElement>) => {
     return (
-      <DateRangeExpandContainer ref={ref} backgroundColor={backgroundColor}>
-        {dateRangeList.map((dateRange) => {
+      <DateRangeExpandContainer ref={ref} aria-label='date range viewer options' backgroundColor={backgroundColor}>
+        {dateRangeList.map((dateRange, index) => {
           const disabled = dateRange.disabled || disabledAll;
           const status = getDateRangeStatus(formatDateToTimestampString(dateRange.startDate!));
           return (
@@ -139,6 +139,7 @@ const DateRangeViewer = ({
               backgroundColor={getBackgroundColor(dateRange.startDate!)}
               onClick={() => handleClick(dateRange.startDate!)}
               key={dateRange.startDate!}
+              aria-label={`date range viewer - option ${index}`}
             >
               <DateRangeIcon isLoading={status.isLoading} isFailed={status.isFailed} />
               {formatDate(dateRange.startDate as string)}
@@ -155,7 +156,7 @@ const DateRangeViewer = ({
     <StyledDateRangeViewerContainer
       color={disabledAll ? theme.palette.text.disabled : theme.palette.text.primary}
       backgroundColor={backgroundColor}
-      aria-label='date range'
+      aria-label='date range viewer'
     >
       <DateRangeContainer>
         <DateRangeIcon

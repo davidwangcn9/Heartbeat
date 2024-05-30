@@ -26,8 +26,8 @@ export interface ITrendInfo {
 }
 
 const TREND_ICON_MAPPING = {
-  [TREND_ICON.UP]: <TrendingUpSharpIcon />,
-  [TREND_ICON.DOWN]: <TrendingDownSharpIcon />,
+  [TREND_ICON.UP]: <TrendingUpSharpIcon aria-label={'trend up'} />,
+  [TREND_ICON.DOWN]: <TrendingDownSharpIcon aria-label={'trend down'} />,
 };
 
 const TREND_TYPE_ICON_MAPPING = {
@@ -82,14 +82,17 @@ const ChartAndTitleWrapper = forwardRef(
           {trendInfo.type}
           {trendInfo.trendNumber !== undefined && (
             <Tooltip title={tipContent} arrow>
-              <TrendContainer color={TREND_COLOR_MAP[trendInfo.trendType!]}>
+              <TrendContainer
+                color={TREND_COLOR_MAP[trendInfo.trendType!]}
+                aria-label={trendInfo.type + ' trend container'}
+              >
                 <TrendIcon>{TREND_ICON_MAPPING[trendInfo.icon!]}</TrendIcon>
                 <span aria-label='trend number'>{convertNumberToPercent(trendInfo.trendNumber)}</span>
               </TrendContainer>
             </Tooltip>
           )}
         </ChartTitle>
-        <ChartWrapper ref={ref}></ChartWrapper>
+        <ChartWrapper ref={ref} aria-label={trendInfo.type.toLowerCase() + ' chart'}></ChartWrapper>
       </div>
     );
   },

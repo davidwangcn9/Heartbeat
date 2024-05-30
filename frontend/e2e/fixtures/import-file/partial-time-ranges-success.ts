@@ -1,4 +1,4 @@
-export const importMultipleDoneProjectFromFile = {
+export const partialTimeRangesSuccess = {
   projectName: 'Heartbeat Metrics',
   dateRange: [
     {
@@ -42,16 +42,7 @@ export const importMultipleDoneProjectFromFile = {
     type: 'GitHub',
     token: process.env.E2E_TOKEN_GITHUB,
   },
-  crews: [
-    'heartbeat user',
-    'Weiran Sun',
-    'Yufan Wang',
-    'Chao Wang',
-    'Xinyi Wang',
-    'Xuebing Li',
-    'Junbo Dai',
-    'Yunsong Yang',
-  ],
+  crews: ['heartbeat user', 'Weiran Sun', 'Yufan Wang', 'Xinyi Wang', 'Xuebing Li', 'Junbo Dai', 'Yunsong Yang'],
   assigneeFilter: 'lastAssignee',
   cycleTime: {
     type: 'byColumn',

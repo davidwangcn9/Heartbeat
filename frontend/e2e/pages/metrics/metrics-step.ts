@@ -13,6 +13,9 @@ export class MetricsStep {
   readonly pipelineConfigurationTitle: Locator;
   readonly loadings: Locator;
   readonly saveAsButton: Locator;
+  readonly dateRangeViewerContainer: Locator;
+  readonly dateRangeViewerExpandTrigger: Locator;
+  readonly dateRangeViewerOptions: Locator;
 
   readonly boardNocardReminder: Locator;
   readonly boardCrewSettingsLabel: Locator;
@@ -78,9 +81,12 @@ export class MetricsStep {
     this.nextButton = page.getByRole('button', { name: 'Next' });
     this.previousButton = page.getByRole('button', { name: 'Previous' });
     this.saveAsButton = page.getByRole('button', { name: 'Save' });
-    this.boardConfigurationTitle = page.getByText('Board configuration');
-    this.pipelineConfigurationTitle = page.getByText('Pipeline configuration');
+    this.boardConfigurationTitle = page.getByLabel('Board configuration title');
+    this.pipelineConfigurationTitle = page.getByLabel('Pipeline configuration title');
     this.loadings = page.getByTestId('loading');
+    this.dateRangeViewerContainer = this.page.getByLabel('date range viewer');
+    this.dateRangeViewerExpandTrigger = this.dateRangeViewerContainer.getByLabel('expandMore');
+    this.dateRangeViewerOptions = this.dateRangeViewerContainer.getByLabel('date range viewer options');
 
     this.boardNocardReminder = page.getByText('No card within selected date range!');
     this.boardCrewSettingsLabel = page.getByLabel('Included Crews *');
@@ -188,7 +194,7 @@ export class MetricsStep {
     this.pipelineStepsErrorMessage = page.getByText('No steps for this pipeline!');
     this.pipelineBranchesErrorMessage = page.getByText('The branch has been deleted!');
     this.pipelineTokenWithNoOrgErrorMessage = this.pipelineSettingSection.getByLabel('Error UI for pipeline settings');
-    this.pipelineBranchSelectIndicator = page.getByText('Branches').getByRole('progressbar');
+    this.pipelineBranchSelectIndicator = this.pipelineDefaultBranchSelectContainer.getByRole('progressbar');
     this.pipelineNewPipelineButton = page.getByRole('button', { name: 'New Pipeline' });
     this.pipelineCrewSettingsLabel = this.pipelineSettingSection
       .getByLabel('Included Crews multiple select')
@@ -208,6 +214,10 @@ export class MetricsStep {
 
   async validateNextButtonNotClickable() {
     await expect(this.nextButton).toBeDisabled();
+  }
+
+  async validateNextButtonClickable() {
+    await expect(this.nextButton).toBeEnabled();
   }
 
   async checkBoardConfigurationVisible() {
@@ -637,6 +647,26 @@ export class MetricsStep {
     await this.selectBranch(firstPipelineConfig.branches);
   }
 
+  async selectAllPipelineCrews() {
+    await this.pipelineCrewSettingsLabel.click();
+    const options = this.page.getByRole('option');
+    const allOption = options.filter({ hasText: 'All' }).first();
+    for (const option of (await options.all()).slice(1)) {
+      const isOptionSelected = (await option.getAttribute('aria-selected')) === 'true';
+      if (!isOptionSelected) {
+        await allOption.click();
+        break;
+      }
+    }
+
+    for (const option of (await options.all()).slice(1)) {
+      const value = await option.getAttribute('aria-selected');
+      expect(value).toEqual('true');
+    }
+
+    await this.page.keyboard.press('Escape');
+  }
+
   async selectGivenPipelineCrews(crews: string[]) {
     await this.pipelineCrewSettingsLabel.click();
     const options = this.page.getByRole('option');
@@ -778,5 +808,36 @@ export class MetricsStep {
     await expect(this.pipelineTokenWithNoOrgErrorMessage).toContainText(
       'Please go back to the previous page and change your pipeline token with correct access permission.',
     );
+  }
+
+  async checkPartialApiFailedTimeRangeIndicator(rangeCount: number) {
+    await this.dateRangeViewerExpandTrigger.click();
+    await expect(this.dateRangeViewerOptions).toBeVisible();
+    const apiIndicators = {
+      green: 0,
+      red: 0,
+    };
+    for (let i = 0; i < rangeCount; i++) {
+      const currentRange = this.dateRangeViewerOptions.getByLabel(`date range viewer - option ${i}`);
+      if ((await currentRange.getByLabel('error icon in date').count()) > 0) {
+        apiIndicators.red++;
+      } else if ((await currentRange.getByLabel('success icon in date').count()) > 0) {
+        apiIndicators.green++;
+      }
+    }
+    expect(apiIndicators.red).toBeGreaterThan(0);
+    expect(apiIndicators.green).toBeGreaterThan(0);
+    expect(apiIndicators.red + apiIndicators.green).toEqual(rangeCount);
+  }
+
+  async checkApiFailedAlertVisible() {
+    await expect(this.page.getByRole('alert').first()).toContainText(
+      'Failed to get partial Board configuration, you can click "Next" button to go to Report page.',
+    );
+  }
+
+  async checkSomeApiFailed(rangeCount: number) {
+    await this.checkApiFailedAlertVisible();
+    await this.checkPartialApiFailedTimeRangeIndicator(rangeCount);
   }
 }

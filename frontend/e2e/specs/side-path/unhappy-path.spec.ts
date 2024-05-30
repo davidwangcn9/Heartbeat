@@ -84,22 +84,13 @@ test('unhappy path when import file', async ({ homePage, configStep, metricsStep
   await metricsStep.goToReportPage();
 
   await reportStep.confirmGeneratedReport();
-  await reportStep.checkBoardMetrics(
-    BOARD_METRICS_RESULT.Velocity,
-    BOARD_METRICS_RESULT.Throughput,
-    BOARD_METRICS_RESULT.AverageCycleTime4SP,
-    BOARD_METRICS_RESULT.AverageCycleTime4Card,
-    BOARD_METRICS_RESULT.totalReworkTimes,
-    BOARD_METRICS_RESULT.totalReworkCards,
-    BOARD_METRICS_RESULT.reworkCardsRatio,
-    BOARD_METRICS_RESULT.throughput,
-  );
-  await reportStep.checkDoraMetrics(
-    DORA_METRICS_RESULT.PrLeadTime,
-    DORA_METRICS_RESULT.PipelineLeadTime,
-    DORA_METRICS_RESULT.TotalLeadTime,
-    DORA_METRICS_RESULT.DeploymentFrequency,
-    DORA_METRICS_RESULT.FailureRate,
-    DORA_METRICS_RESULT.DevMeanTimeToRecovery,
-  );
+  await reportStep.checkBoardMetrics(BOARD_METRICS_RESULT);
+  await reportStep.checkDoraMetrics({
+    prLeadTime: DORA_METRICS_RESULT.PrLeadTime,
+    pipelineLeadTime: DORA_METRICS_RESULT.PipelineLeadTime,
+    totalLeadTime: DORA_METRICS_RESULT.TotalLeadTime,
+    deploymentFrequency: DORA_METRICS_RESULT.DeploymentFrequency,
+    failureRate: DORA_METRICS_RESULT.FailureRate,
+    devMeanTimeToRecovery: DORA_METRICS_RESULT.DevMeanTimeToRecovery,
+  });
 });

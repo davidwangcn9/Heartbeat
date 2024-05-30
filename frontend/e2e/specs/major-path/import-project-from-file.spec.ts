@@ -1,13 +1,19 @@
 import {
-  BOARD_METRICS_RESULT,
   BOARD_METRICS_WITH_HOLIDAY_RESULT,
   DORA_METRICS_WITH_HOLIDAY_RESULT,
   FLAG_AS_BLOCK_PROJECT_BOARD_METRICS_RESULT,
+  BOARD_METRICS_RESULT_MULTIPLE_RANGES,
+  BOARD_METRICS_VELOCITY_MULTIPLE_RANGES,
+  BOARD_METRICS_CYCLETIME_MULTIPLE_RANGES,
+  BOARD_METRICS_CLASSIFICATION_MULTIPLE_RANGES,
+  BOARD_METRICS_REWORK_MULTIPLE_RANGES,
+  BAORD_CSV_COMPARED_LINES,
+  DORA_METRICS_RESULT_MULTIPLE_RANGES,
 } from '../../fixtures/create-new/report-result';
 import { calculateWithHolidayConfigFile } from '../../fixtures/import-file/calculate-with-holiday-config-file';
 import { cycleTimeByStatusFixture } from '../../fixtures/cycle-time-by-status/cycle-time-by-status-fixture';
 import { importMultipleDoneProjectFromFile } from '../../fixtures/import-file/multiple-done-config-file';
-import { config as metricsStepData } from '../../fixtures/create-new/metrics-step';
+import { partialTimeRangesSuccess } from '../../fixtures/import-file/partial-time-ranges-success';
 import { ProjectCreationType } from 'e2e/pages/metrics/report-step';
 import { test } from '../../fixtures/test-with-extend-fixtures';
 import { clearTempDir } from 'e2e/utils/clear-temp-dir';
@@ -16,7 +22,12 @@ test.beforeAll(async () => {
   await clearTempDir();
 });
 
-test('Import project from file', async ({ homePage, configStep, metricsStep, reportStep }) => {
+test('Import project from file with all ranges API succeed', async ({
+  homePage,
+  configStep,
+  metricsStep,
+  reportStep,
+}) => {
   const hbStateData = importMultipleDoneProjectFromFile.cycleTime.jiraColumns.map(
     (jiraToHBSingleMap) => Object.values(jiraToHBSingleMap)[0],
   );
@@ -31,45 +42,80 @@ test('Import project from file', async ({ homePage, configStep, metricsStep, rep
   await configStep.clickPreviousButtonAndClickCancelThenRemainPage();
   await configStep.verifyAllConfig();
   await configStep.goToMetrics();
-  await metricsStep.waitForShown();
 
-  // To verify board configuration matches json file data
+  await metricsStep.waitForShown();
   await metricsStep.checkCrewsAreChanged(importMultipleDoneProjectFromFile.crews);
   await metricsStep.checkLastAssigneeCrewFilterChecked();
   await metricsStep.checkCycleTimeSettingIsByColumn();
   await metricsStep.checkHeartbeatStateIsSet(hbStateData, true);
-
   await metricsStep.selectCycleTimeSettingsType(cycleTimeByStatusFixture.cycleTime.type);
   await metricsStep.checkHeartbeatStateIsSet(hbStateDataEmptyByStatus, false);
   await metricsStep.selectHeartbeatState(hbStateData, false);
   await metricsStep.checkHeartbeatStateIsSet(hbStateData, false);
-
   await metricsStep.selectCycleTimeSettingsType(importMultipleDoneProjectFromFile.cycleTime.type);
   await metricsStep.checkHeartbeatStateIsSet(hbStateDataEmptyByStatus, true);
   await metricsStep.selectHeartbeatState(hbStateData, true);
   await metricsStep.checkHeartbeatStateIsSet(hbStateData, true);
   await metricsStep.selectGivenPipelineCrews(importMultipleDoneProjectFromFile.pipelineCrews);
-
-  await metricsStep.selectReworkSettings(metricsStepData.reworkTimesSettings);
-
+  await metricsStep.selectReworkSettings(importMultipleDoneProjectFromFile.reworkTimesSettings);
   await metricsStep.checkClassifications(importMultipleDoneProjectFromFile.classification);
   await metricsStep.checkPipelineConfigurationAreChanged(importMultipleDoneProjectFromFile.deployment);
 
   await metricsStep.goToReportPage();
   await reportStep.confirmGeneratedReport();
-  await reportStep.checkBoardMetrics(
-    BOARD_METRICS_RESULT.Velocity,
-    BOARD_METRICS_RESULT.Throughput,
-    BOARD_METRICS_RESULT.AverageCycleTime4SP,
-    BOARD_METRICS_RESULT.AverageCycleTime4Card,
-    BOARD_METRICS_RESULT.totalReworkTimes,
-    BOARD_METRICS_RESULT.totalReworkCards,
-    BOARD_METRICS_RESULT.reworkCardsRatio,
-    BOARD_METRICS_RESULT.throughput,
+  await reportStep.checkBoardMetricsForMultipleRanges(BOARD_METRICS_RESULT_MULTIPLE_RANGES);
+  await reportStep.checkBoardMetricsDetailsForMultipleRanges({
+    projectCreationType: ProjectCreationType.CREATE_A_NEW_PROJECT,
+    velocityData: BOARD_METRICS_VELOCITY_MULTIPLE_RANGES,
+    cycleTimeData: BOARD_METRICS_CYCLETIME_MULTIPLE_RANGES,
+    classificationData: BOARD_METRICS_CLASSIFICATION_MULTIPLE_RANGES,
+    reworkData: BOARD_METRICS_REWORK_MULTIPLE_RANGES,
+    csvCompareLines: BAORD_CSV_COMPARED_LINES,
+  });
+  await reportStep.checkDoraMetricsDetailsForMultipleRanges({
+    doraMetricsReportData: DORA_METRICS_RESULT_MULTIPLE_RANGES,
+    projectCreationType: ProjectCreationType.CREATE_A_NEW_PROJECT,
+  });
+  await reportStep.checkMetricDownloadDataForMultipleRanges(3);
+});
+
+test('Import project from file with partial ranges API failed', async ({
+  homePage,
+  configStep,
+  metricsStep,
+  reportStep,
+}) => {
+  const hbStateData = partialTimeRangesSuccess.cycleTime.jiraColumns.map(
+    (jiraToHBSingleMap) => Object.values(jiraToHBSingleMap)[0],
   );
-  await reportStep.checkBoardMetricsDetails(ProjectCreationType.IMPORT_PROJECT_FROM_FILE, 9);
-  await reportStep.checkDoraMetricsDetails(ProjectCreationType.IMPORT_PROJECT_FROM_FILE);
-  await reportStep.checkDownloadReports();
+
+  await homePage.goto();
+
+  await homePage.importProjectFromFile('../fixtures/input-files/partial-time-ranges-success.json');
+  await configStep.clickPreviousButtonAndClickCancelThenRemainPage();
+  await configStep.verifyAllConfig();
+  await configStep.goToMetrics();
+
+  await metricsStep.waitForShown();
+  await metricsStep.checkSomeApiFailed(3);
+  await metricsStep.checkCrewsAreChanged(partialTimeRangesSuccess.crews);
+  await metricsStep.checkLastAssigneeCrewFilterChecked();
+  await metricsStep.checkCycleTimeSettingIsByColumn();
+  await metricsStep.selectCycleTimeSettingsType(partialTimeRangesSuccess.cycleTime.type);
+  await metricsStep.selectHeartbeatState(hbStateData, true);
+  await metricsStep.checkHeartbeatStateIsSet(hbStateData, true);
+  await metricsStep.selectAllPipelineCrews();
+  await metricsStep.checkClassifications(partialTimeRangesSuccess.classification);
+  await metricsStep.validateNextButtonClickable();
+  await metricsStep.goToReportPage();
+
+  await reportStep.confirmGeneratedReport();
+
+  await reportStep.checkSelectListTab();
+  await reportStep.goToChartBoardTab();
+  await reportStep.checkChartBoardTabStatus();
+  await reportStep.goToCharDoraTab();
+  await reportStep.checkChartDoraTabStatus();
 });
 
 test('Import project from file with holiday', async ({ homePage, configStep, metricsStep, reportStep }) => {
@@ -105,31 +151,31 @@ test('Import project from file with holiday', async ({ homePage, configStep, met
   await metricsStep.selectHeartbeatState(hbStateData, true);
   await metricsStep.checkHeartbeatStateIsSet(hbStateData, true);
 
-  await metricsStep.selectReworkSettings(metricsStepData.reworkTimesSettings);
+  await metricsStep.selectReworkSettings(calculateWithHolidayConfigFile.reworkTimesSettings);
 
   await metricsStep.checkClassifications(calculateWithHolidayConfigFile.classification);
   await metricsStep.checkPipelineConfigurationAreChanged(calculateWithHolidayConfigFile.deployment);
 
   await metricsStep.goToReportPage();
   await reportStep.confirmGeneratedReport();
-  await reportStep.checkBoardMetrics(
-    BOARD_METRICS_WITH_HOLIDAY_RESULT.Velocity,
-    BOARD_METRICS_WITH_HOLIDAY_RESULT.Throughput,
-    BOARD_METRICS_WITH_HOLIDAY_RESULT.AverageCycleTime4SP,
-    BOARD_METRICS_WITH_HOLIDAY_RESULT.AverageCycleTime4Card,
-    BOARD_METRICS_WITH_HOLIDAY_RESULT.totalReworkTimes,
-    BOARD_METRICS_WITH_HOLIDAY_RESULT.totalReworkCards,
-    BOARD_METRICS_WITH_HOLIDAY_RESULT.reworkCardsRatio,
-    BOARD_METRICS_WITH_HOLIDAY_RESULT.throughput,
-  );
-  await reportStep.checkDoraMetrics(
-    DORA_METRICS_WITH_HOLIDAY_RESULT.PrLeadTime,
-    DORA_METRICS_WITH_HOLIDAY_RESULT.PipelineLeadTime,
-    DORA_METRICS_WITH_HOLIDAY_RESULT.TotalLeadTime,
-    DORA_METRICS_WITH_HOLIDAY_RESULT.DeploymentFrequency,
-    DORA_METRICS_WITH_HOLIDAY_RESULT.FailureRate,
-    DORA_METRICS_WITH_HOLIDAY_RESULT.DevMeanTimeToRecovery,
-  );
+  await reportStep.checkBoardMetrics({
+    velocity: BOARD_METRICS_WITH_HOLIDAY_RESULT.Velocity,
+    throughput: BOARD_METRICS_WITH_HOLIDAY_RESULT.Throughput,
+    averageCycleTimeForSP: BOARD_METRICS_WITH_HOLIDAY_RESULT.AverageCycleTime4SP,
+    averageCycleTimeForCard: BOARD_METRICS_WITH_HOLIDAY_RESULT.AverageCycleTime4Card,
+    totalReworkTimes: BOARD_METRICS_WITH_HOLIDAY_RESULT.totalReworkTimes,
+    totalReworkCards: BOARD_METRICS_WITH_HOLIDAY_RESULT.totalReworkCards,
+    reworkCardsRatio: BOARD_METRICS_WITH_HOLIDAY_RESULT.reworkCardsRatio,
+    reworkThroughput: BOARD_METRICS_WITH_HOLIDAY_RESULT.throughput,
+  });
+  await reportStep.checkDoraMetrics({
+    prLeadTime: DORA_METRICS_WITH_HOLIDAY_RESULT.PrLeadTime,
+    pipelineLeadTime: DORA_METRICS_WITH_HOLIDAY_RESULT.PipelineLeadTime,
+    totalLeadTime: DORA_METRICS_WITH_HOLIDAY_RESULT.TotalLeadTime,
+    deploymentFrequency: DORA_METRICS_WITH_HOLIDAY_RESULT.DeploymentFrequency,
+    failureRate: DORA_METRICS_WITH_HOLIDAY_RESULT.FailureRate,
+    devMeanTimeToRecovery: DORA_METRICS_WITH_HOLIDAY_RESULT.DevMeanTimeToRecovery,
+  });
   await reportStep.checkDownloadWithHolidayReports();
 });
 
@@ -149,15 +195,6 @@ test('Import project from flag as block and without block column', async ({
   await metricsStep.goToReportPage();
 
   await reportStep.confirmGeneratedReport();
-  await reportStep.checkBoardMetrics(
-    FLAG_AS_BLOCK_PROJECT_BOARD_METRICS_RESULT.Velocity,
-    FLAG_AS_BLOCK_PROJECT_BOARD_METRICS_RESULT.Throughput,
-    FLAG_AS_BLOCK_PROJECT_BOARD_METRICS_RESULT.AverageCycleTime4SP,
-    FLAG_AS_BLOCK_PROJECT_BOARD_METRICS_RESULT.AverageCycleTime4Card,
-    FLAG_AS_BLOCK_PROJECT_BOARD_METRICS_RESULT.totalReworkTimes,
-    FLAG_AS_BLOCK_PROJECT_BOARD_METRICS_RESULT.totalReworkCards,
-    FLAG_AS_BLOCK_PROJECT_BOARD_METRICS_RESULT.reworkCardsRatio,
-    FLAG_AS_BLOCK_PROJECT_BOARD_METRICS_RESULT.throughput,
-  );
+  await reportStep.checkBoardMetrics(FLAG_AS_BLOCK_PROJECT_BOARD_METRICS_RESULT);
   await reportStep.checkBoardDownloadDataWithoutBlock('../../fixtures/import-file/board-data-without-block-column.csv');
 });

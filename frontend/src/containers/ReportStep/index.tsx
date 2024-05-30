@@ -465,6 +465,7 @@ const ReportStep = ({ handleSave }: ReportStepProps) => {
       <Box sx={{ marginRight: '2.5rem' }}>
         <StyledTabs value={displayType} onChange={handleClick} aria-label='display types'>
           <StyledTab
+            aria-label='display list tab'
             sx={{
               borderRight: 'none',
               borderRadius: '0.16rem 0 0 0.16rem',
@@ -474,6 +475,7 @@ const ReportStep = ({ handleSave }: ReportStepProps) => {
             label='List'
           />
           <StyledTab
+            aria-label='display chart tab'
             sx={{
               borderLeft: 'none',
               borderRadius: '0 0.16rem 0.16rem 0',
@@ -489,11 +491,12 @@ const ReportStep = ({ handleSave }: ReportStepProps) => {
         <Box>
           <Tabs TabIndicatorProps={CHART_TAB_STYLE} value={chartIndex} onChange={handleChange} aria-label='chart tabs'>
             <Tab
+              aria-label='board chart'
               label='Board'
               {...tabProps(0)}
               disabled={selectDoraMetricsAndClassification || !shouldShowBoardMetrics}
             />
-            <Tab label='DORA' {...tabProps(1)} disabled={!shouldShowDoraMetrics} />
+            <Tab label='DORA' aria-label='dora chart' {...tabProps(1)} disabled={!shouldShowDoraMetrics} />
           </Tabs>
         </Box>
       )}
