@@ -16,11 +16,8 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.util.Map;
-import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -54,15 +51,7 @@ class VietnamHolidayTest {
 
 		Map<String, Boolean> result = vietnamHoliday.loadHolidayList(year);
 
-		assertEquals(6, result.size());
-		for (String key : result.keySet()) {
-			if (Objects.equals(key, "2024-01-01")) {
-				assertTrue(result.get(key));
-			}
-			else {
-				assertFalse(result.get(key));
-			}
-		}
+		assertEquals(Map.of("2024-01-01", true), result);
 		verify(calendarificFeignClient).getHolidays(country.getValue().toLowerCase(), year);
 		verify(objectMapper).readValue(eq(calendarificHolidayResponseDTOString), any(Class.class));
 	}
