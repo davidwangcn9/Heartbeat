@@ -1,16 +1,24 @@
 import React, { useEffect, useRef } from 'react';
 
 import {
-  oneLineOptionMapper,
-  Series,
-  stackedBarOptionMapper,
-} from '@src/containers/ReportStep/DoraMetricsChart/ChartOption';
-import {
   ChartType,
   EMPTY_DATA_MAPPER_DORA_CHART,
   LEAD_TIME_CHARTS_MAPPING,
+  MetricsSubtitle,
   RequiredData,
 } from '@src/constants/resources';
+import {
+  oneLineOptionMapper,
+  Series,
+  stackedBarOptionMapper,
+  stackedAreaOptionMapper,
+} from '@src/containers/ReportStep/ChartOption';
+import {
+  AREA_STYLE,
+  LABEL_PERCENT,
+  LEFT_RIGHT_ALIGN_LABEL,
+  NO_LABEL,
+} from '@src/containers/ReportStep/BoardMetricsChart';
 import { ReportResponse, ReportResponseDTO } from '@src/clients/report/dto/response';
 import ChartAndTitleWrapper from '@src/containers/ReportStep/ChartAndTitleWrapper';
 import { calculateTrendInfo, percentageFormatter } from '@src/utils/util';
@@ -33,8 +41,6 @@ enum DORAMetricsChartType {
   DevMeanTimeToRecovery = 'devMeanTimeToRecoveryList',
 }
 
-const NO_LABEL = '';
-const LABEL_PERCENT = '%';
 const AVERAGE = 'Average';
 
 function extractedStackedBarData(allDateRanges: string[], mappedData: ReportResponse[] | undefined) {
@@ -78,26 +84,54 @@ function extractedStackedBarData(allDateRanges: string[], mappedData: ReportResp
 
 function extractedDeploymentFrequencyData(allDateRanges: string[], mappedData: ReportResponse[] | undefined) {
   const data = mappedData?.map((item) => item.deploymentFrequencyList);
-  const value = data?.map((items) => {
+  const averageDeploymentFrequency = data?.map((items) => {
     const averageItem = items?.find((item) => item.name === AVERAGE);
     if (!averageItem) return 0;
     return Number(averageItem.valueList[0].value) || 0;
   });
-  const trendInfo = calculateTrendInfo(value, allDateRanges, ChartType.DeploymentFrequency);
+  const deployTimes = data?.map((items) => {
+    const averageItem = items?.find((item) => item.name === AVERAGE);
+    if (!averageItem) return 0;
+    return Number(averageItem.valueList[1].value);
+  });
+  const trendInfo = calculateTrendInfo(averageDeploymentFrequency, allDateRanges, ChartType.DeploymentFrequency);
   return {
-    legend: RequiredData.DeploymentFrequency,
-    xAxis: allDateRanges,
-    yAxis: {
-      name: 'Deployments/Days',
-      alignTick: false,
-      axisLabel: NO_LABEL,
+    xAxis: {
+      data: allDateRanges,
+      boundaryGap: false,
+      axisLabel: LEFT_RIGHT_ALIGN_LABEL,
     },
-    series: {
-      name: RequiredData.DeploymentFrequency,
-      type: 'line',
-      data: value!,
-    },
-    color: theme.main.doraChart.deploymentFrequencyChartColor,
+    yAxis: [
+      {
+        name: MetricsSubtitle.DeploymentFrequency,
+        alignTick: false,
+        axisLabel: NO_LABEL,
+      },
+      {
+        name: MetricsSubtitle.DeploymentTimes,
+        alignTick: false,
+        axisLabel: NO_LABEL,
+      },
+    ],
+    series: [
+      {
+        name: MetricsSubtitle.DeploymentFrequency,
+        type: 'line',
+        data: averageDeploymentFrequency!,
+        yAxisIndex: 0,
+        smooth: true,
+        areaStyle: AREA_STYLE,
+      },
+      {
+        name: MetricsSubtitle.DeploymentTimes,
+        type: 'line',
+        data: deployTimes!,
+        yAxisIndex: 1,
+        smooth: true,
+        areaStyle: AREA_STYLE,
+      },
+    ],
+    color: [theme.main.boardChart.lineColorA, theme.main.boardChart.lineColorB],
     trendInfo,
   };
 }
@@ -225,9 +259,9 @@ export const DoraMetricsChart = ({ data, dateRanges, metrics }: DoraMetricsChart
   });
 
   const leadTimeForChangeData = extractedStackedBarData(dateRanges, mappedData);
-  const leadTimeForChangeDataOption = leadTimeForChangeData && stackedBarOptionMapper(leadTimeForChangeData);
+  const leadTimeForChangeDataOption = leadTimeForChangeData && stackedBarOptionMapper(leadTimeForChangeData, false);
   const deploymentFrequencyData = extractedDeploymentFrequencyData(dateRanges, mappedData);
-  const deploymentFrequencyDataOption = deploymentFrequencyData && oneLineOptionMapper(deploymentFrequencyData);
+  const deploymentFrequencyDataOption = deploymentFrequencyData && stackedAreaOptionMapper(deploymentFrequencyData);
   const changeFailureRateData = extractedChangeFailureRateData(dateRanges, mappedData);
   const changeFailureRateDataOption = changeFailureRateData && oneLineOptionMapper(changeFailureRateData);
   const meanTimeToRecoveryData = extractedMeanTimeToRecoveryDataData(dateRanges, mappedData);
