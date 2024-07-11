@@ -3,6 +3,7 @@ package heartbeat.handler;
 import heartbeat.controller.report.dto.request.MetricType;
 import heartbeat.controller.report.dto.response.MetricsDataCompleted;
 import heartbeat.exception.GenerateReportException;
+import heartbeat.exception.InternalServerErrorException;
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterAll;
@@ -271,7 +272,8 @@ class AsyncMetricsDataHandlerTest {
 				try {
 					TimeUnit.MILLISECONDS.sleep(sleepTime.get(0)); // NOSONAR
 				}
-				catch (InterruptedException ignored) {
+				catch (InterruptedException e) {
+					throw new InternalServerErrorException(e.getMessage());
 				}
 				asyncMetricsDataHandler.updateMetricsDataCompletedInHandler(currentTime, BOARD, true);
 			}));
@@ -279,7 +281,8 @@ class AsyncMetricsDataHandlerTest {
 				try {
 					TimeUnit.MILLISECONDS.sleep(sleepTime.get(1)); // NOSONAR
 				}
-				catch (InterruptedException ignored) {
+				catch (InterruptedException e) {
+					throw new InternalServerErrorException(e.getMessage());
 				}
 				asyncMetricsDataHandler.updateMetricsDataCompletedInHandler(currentTime, DORA, true);
 			}));
@@ -287,7 +290,8 @@ class AsyncMetricsDataHandlerTest {
 				try {
 					TimeUnit.MILLISECONDS.sleep(sleepTime.get(2)); // NOSONAR
 				}
-				catch (InterruptedException ignored) {
+				catch (InterruptedException e) {
+					throw new InternalServerErrorException(e.getMessage());
 				}
 				asyncMetricsDataHandler.updateOverallMetricsCompletedInHandler(currentTime);
 			}));
